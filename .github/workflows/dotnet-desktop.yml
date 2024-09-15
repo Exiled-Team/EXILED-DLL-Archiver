@@ -1,5 +1,5 @@
-
 name: CI
+
 on:
   push:
     branches: [ master ]
@@ -8,26 +8,34 @@ on:
   workflow_dispatch:
 
 jobs:
-  
   build:
     runs-on: windows-latest
+
     steps:
-      - name: Setup .NET Core SDK
-        uses: actions/setup-dotnet@v1.7.2
-        
-      - uses: actions/checkout@v2.3.4
-            
-      - name: Restore Packages
-        run: nuget restore
-        
-      - name: setup-msbuild
-        uses: microsoft/setup-msbuild@v1.1.3
-        
-      - name: Build app for release
-        run: msbuild EXILED-DLL-Archiver\EXILED-DLL-Archiver.csproj -t:rebuild -verbosity:diag -property:Configuration=Release
-        
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v2
+      - name: Setup .NET 8 SDK
+        uses: actions/setup-dotnet@v3
         with:
-          name: EXILED-DLL-Archiver.exe
-          path: EXILED-DLL-Archiver/bin/Release/EXILED-DLL-Archiver.exe
+          dotnet-version: '8.x'
+
+      - uses: actions/checkout@v3
+
+      - name: Restore Packages
+        run: dotnet restore
+
+      - name: Build app for release (Windows)
+        run: dotnet publish -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true
+
+      - name: Build app for release (Linux)
+        run: dotnet publish -c Release -r linux-x64 --self-contained true /p:PublishSingleFile=true
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: Exiled.Archiver-win-x64
+          path: Exiled.Archiver/bin/Release/net8.0/win-x64/publish/Exiled.Archiver.exe
+
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: Exiled.Archiver-linux-x64
+          path: Exiled.Archiver/bin/Release/net8.0/linux-x64/publish/Exiled.Archiver
